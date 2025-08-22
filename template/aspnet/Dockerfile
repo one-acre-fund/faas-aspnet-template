@@ -71,8 +71,8 @@ ENV upstream_url="http://localhost:9000"
 ENV ASPNETCORE_URLS=http://+:9000
 
 ENV exec_timeout="120s"
-ENV write_timeout="122s"
-ENV read_timeout="122s"
+ENV write_timeout="125s"
+ENV read_timeout="125s"
 
 ENV prefix_logs="false"
 
