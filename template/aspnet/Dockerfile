@@ -1,7 +1,7 @@
 # syntax=docker/dockerfile:1.3
-FROM ghcr.io/openfaas/of-watchdog:0.9.6 as watchdog
+FROM ghcr.io/openfaas/of-watchdog:0.11.0 AS watchdog
 
-FROM --platform=$BUILDPLATFORM mcr.microsoft.com/dotnet/sdk:9.0-bookworm-slim as builder
+FROM --platform=$BUILDPLATFORM mcr.microsoft.com/dotnet/sdk:9.0-bookworm-slim AS builder
 ARG RUN_TESTS="true"
 ARG AZURE_DEVOPS_FEED_USERNAME
 ARG AZURE_DEVOPS_FEED_ACCESSTOKEN
@@ -75,6 +75,7 @@ ENV upstream_url="http://localhost:9000"
 ENV ASPNETCORE_URLS=http://+:9000
 
 ENV prefix_logs="false"
+ENV log_buffer_size="-1"
 
 EXPOSE 8080
 
