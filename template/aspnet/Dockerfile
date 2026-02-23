@@ -23,11 +23,9 @@ COPY function/tests/unit/unit.csproj ./tests/unit/
 # list files in WORKDIR
 RUN ls
 
-# restore packages
-COPY add-nuget-config.sh /tmp/
-RUN chmod u+x /tmp/add-nuget-config.sh
-RUN --mount=type=secret,id=nuget.config /tmp/add-nuget-config.sh nuget.config \
-    dotnet restore -a $TARGETARCH
+# restore packages (copy nuget.config if exists - CI/CD injects Azure Artifacts credentials)
+COPY function/src/nuget.config ./nuget.config 2>/dev/null || true
+RUN dotnet restore -a $TARGETARCH
 
 # Copies the rest of the code
 WORKDIR /source/faas
