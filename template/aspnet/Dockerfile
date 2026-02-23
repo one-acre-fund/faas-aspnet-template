@@ -24,7 +24,7 @@ COPY function/tests/unit/unit.csproj ./tests/unit/
 RUN ls
 
 # restore packages (copy nuget.config if exists - CI/CD injects Azure Artifacts credentials)
-COPY function/src/nuget.config ./nuget.config 2>/dev/null || true
+COPY function/src/nuget.config* ./
 RUN dotnet restore -a $TARGETARCH
 
 # Copies the rest of the code
