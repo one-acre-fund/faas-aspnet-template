@@ -32,7 +32,7 @@ WORKDIR /source/faas
 COPY . .
 
 # Run the unit tests
-RUN dotnet test function/tests/unit/unit.csproj -c release
+RUN dotnet test function/tests/unit/unit.csproj -c release --no-restore
 
 # build and publish
 RUN dotnet publish \
