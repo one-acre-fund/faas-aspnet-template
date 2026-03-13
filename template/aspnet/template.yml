@@ -1,4 +1,6 @@
 language: aspnet
-fprocess: ./function
+fprocess: ./start.sh
 welcome_message: |
-  You have created a C# function using ASPNET Functions v2.0.
+  You have created a multi-project C# function using ASPNET Functions.
+  This template supports multiple deployable projects (api, worker) with a shared library.
+  Each sub-project has its own .yml file. Use build_args PUBLISH_PROJECT to target the correct .csproj.

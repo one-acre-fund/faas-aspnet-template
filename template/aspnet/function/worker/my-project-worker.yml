@@ -1,0 +1,31 @@
+version: 1.0
+provider:
+    name: openfaas
+    gateway: http://127.0.0.1:8080
+functions:
+    my-project-worker:
+        lang: aspnet-multi
+        handler: ..
+        image: my-registry/my-project-worker:latest
+        build_args:
+            PUBLISH_PROJECT: "worker/src/worker.csproj"
+        run-tests: "false"
+        disabled: "false"
+
+        environment:
+            ASPNETCORE_ENVIRONMENT: "Development"
+            service-name: "my-project-worker"
+            scheduler-type: "default"
+            sample-worker-enabled: "true"
+            sample-worker-interval-sec: "30"
+
+        labels:
+            com.openfaas.scale.min: "1"
+            com.openfaas.scale.max: "1"
+
+        limits:
+            cpu: "400m"
+            memory: "800Mi"
+        requests:
+            cpu: "100m"
+            memory: "400Mi"
