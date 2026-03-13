@@ -4,6 +4,7 @@
 **/.DS_Store
 **/.idea/
 **/.vs/
+**/.git/
 **/node_modules/
 *.user
 *.DotSettings.user
