@@ -6,9 +6,9 @@ This project offers an advanced OpenFaaS template for ASP.NET 9. It is designed 
 
 ## Installing and Referencing the Template
 
-Rather than downloading the template once via `faas-cli template pull`, you should reference it directly in your project's `.yml` files.
+Rather than downloading the template once via `faas-cli template pull`, you should reference it directly in your project's `stack.yml`.
 
-At the bottom of each of your OpenFaaS YML files, add:
+At the bottom of your `stack.yml`, add:
 
 ```yaml
 configuration:
@@ -31,20 +31,18 @@ my-project/
 ├── worker/
 │   └── src/worker.csproj          ← References Shared.csproj
 │
-├── my-project-api.yml             ← handler: .
-├── my-project-worker.yml          ← handler: .
-│
+├── stack.yml                      ← All functions defined here (handler: .)
 ├── .dockerignore                  ← Excludes bin/ and obj/
 └── my-project.sln                 ← Restores all projects at once
 ```
 
 ## How to use it
 
-### 1. Place YMLs at the root (`handler: .`)
-Because all source code must be available in the Docker build context to resolve inter-project references, your YML files must live at the repository root and set `handler: .`
+### 1. Use a single `stack.yml` at the root (`handler: .`)
+Because all source code must be available in the Docker build context to resolve inter-project references, your `stack.yml` must live at the repository root with each function setting `handler: .`
 
 ### 2. Set the `PUBLISH_PROJECT`
-The template uses a single shared `Dockerfile`. When you build an image, you tell the Dockerfile which specific project to compile by passing it as a `build_arg`:
+The template uses a single shared `Dockerfile`. Each function in `stack.yml` specifies which project to compile via the `PUBLISH_PROJECT` build arg:
 
 ```yaml
 version: 1.0
@@ -54,10 +52,17 @@ provider:
 functions:
     my-project-api:
         lang: aspnet
-        handler: .                         # Must be current directory
+        handler: .
         image: acr/my-project-api:latest
         build_args:
-            PUBLISH_PROJECT: "api/src/api.csproj"   # The exact file to publish
+            PUBLISH_PROJECT: "src/api/api.csproj"
+
+    my-project-worker:
+        lang: aspnet
+        handler: .
+        image: acr/my-project-worker:latest
+        build_args:
+            PUBLISH_PROJECT: "src/worker/worker.csproj"
 ```
 
 ### 3. Dynamic Startup
@@ -69,21 +74,11 @@ There is **no need** to add `<AssemblyName>function</AssemblyName>` to your proj
 
 This template relies on the `COPY --parents` feature to preserve directory structures during the build. This requires Docker BuildKit.
 
-When running a `build` or `up` command, you must explicitly enable BuildKit:
+> **Note:** Docker 23.0+ ships with BuildKit enabled by default. If you're on an older version, set `DOCKER_BUILDKIT=1` as shown below.
 
 ```bash
-DOCKER_BUILDKIT=1 faas-cli build -f my-project-api.yml
+DOCKER_BUILDKIT=1 faas-cli build -f stack.yml
 ```
 
 *(Alternatively, export `DOCKER_BUILDKIT=1` in your `~/.bashrc` or `~/.zshrc`).*
 
-## Running Unit Tests in CI
-The Dockerfile includes a built-in safety gate. If it detects a directory named `function/tests/unit`, it will automatically restore and run `dotnet test` against it during the image build.
-
-If a test fails, the image build fails. This guarantees broken code is never pushed to your registry.
-
-You can bypass this locally by adding a `build_arg` to your YML:
-```yaml
-        build_args:
-            RUN_TESTS: "false"
-```

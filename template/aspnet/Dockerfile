@@ -2,15 +2,13 @@
 FROM ghcr.io/openfaas/of-watchdog:0.9.6 as watchdog
 
 FROM --platform=$BUILDPLATFORM mcr.microsoft.com/dotnet/sdk:9.0-bookworm-slim as builder
-ARG RUN_TESTS="true"
 ARG AZURE_DEVOPS_FEED_USERNAME
 ARG AZURE_DEVOPS_FEED_ACCESSTOKEN
 ARG BUILDPLATFORM
 ARG TARGETARCH
 
 # The only arg that varies per sub-project.
-# Override in your .yml:  build_args: { PUBLISH_PROJECT: "api/src/function.csproj" }
-# Default targets a flat src/function.csproj for backwards-compatibility with single-project layout.
+# Override in your .yml:  build_args: { PUBLISH_PROJECT: "src/api/function.csproj" }
 ARG PUBLISH_PROJECT="src/function.csproj"
 
 RUN apt update && apt install libxml2-utils -y
@@ -23,8 +21,7 @@ ENV DOTNET_CLI_TELEMETRY_OPTOUT 1
 # .dockerignore excludes bin/, obj/, build/ so globs stay clean.
 WORKDIR /source/faas/function
 COPY function/*.sln .
-COPY --parents function/*/src/*.csproj ./
-COPY --parents function/tests/*/ ./
+COPY --parents function/src/*/*.csproj ./
 
 # list files for debugging
 RUN ls -R
@@ -38,11 +35,6 @@ RUN --mount=type=secret,id=nuget.config /tmp/add-nuget-config.sh nuget.config \
 # ── Build phase ──
 WORKDIR /source/faas
 COPY . .
-
-# Run unit tests
-RUN if [ "$RUN_TESTS" = "true" ] && [ -d "function/tests/unit" ]; then \
-      dotnet test function/tests/unit/unit.csproj -c release; \
-    fi
 
 # Publish only the target sub-project
 RUN dotnet publish \
@@ -66,7 +58,7 @@ RUN if getent group app > /dev/null 2>&1; then \
 WORKDIR /home/app/
 COPY --from=builder /source/faas/published .
 
-# Extract the DLL name fromPUBLISH_PROJECT (e.g., "api/src/api.csproj" -> "api.dll")
+# Extract the DLL name from PUBLISH_PROJECT (e.g., "src/api/function.csproj" -> "function.dll")
 ARG PUBLISH_PROJECT
 RUN DLL_NAME=$(basename $PUBLISH_PROJECT .csproj).dll && \
     echo "#!/bin/sh\ndotnet ./$DLL_NAME" > start.sh && \

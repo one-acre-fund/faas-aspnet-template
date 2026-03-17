@@ -1,6 +1,6 @@
 # OpenFaaS ASPNET Multi-Project Template
 
-A template for OpenFaaS that supports **multiple deployable projects** under a single solution with a shared library, a worker service, and a single test project.
+A template for OpenFaaS that supports **multiple deployable projects** under a single solution with a shared library and a worker service.
 
 ## Installing
 
@@ -14,17 +14,17 @@ When you use this template, your project scaffold looks like this:
 
 ```
 my-project/
-├── shared/src/shared.csproj           # Shared library (models, services, utilities)
-├── api/
-│   ├── src/function.csproj            # HTTP API (references shared)
-│   ├── src/Program.cs
-│   └── my-project-api.yml             # OpenFaaS YAML — deployed independently
-├── worker/
-│   ├── src/function.csproj            # Background worker (references shared)
-│   ├── src/Program.cs
-│   ├── src/Workers/SampleWorker.cs
-│   ├── src/Scheduling/IJobScheduler.cs
-│   └── my-project-worker.yml          # OpenFaaS YAML — deployed independently
+├── stack.yml                          # Single OpenFaaS stack — all functions defined here
+├── src/
+│   ├── shared/shared.csproj           # Shared library (models, services, utilities)
+│   ├── api/
+│   │   ├── function.csproj            # HTTP API (references shared)
+│   │   └── Program.cs
+│   └── worker/
+│       ├── worker.csproj              # Background worker (references shared)
+│       ├── Program.cs
+│       ├── Workers/SampleWorker.cs
+│       └── Scheduling/IJobScheduler.cs
 ├── tests/
 │   ├── unit/unit.csproj
 │   └── integration/integration.csproj
@@ -34,19 +34,19 @@ my-project/
 
 ## How It Works
 
-### `handler: ..`
+### `stack.yml`
 
-Each sub-project's `.yml` lives inside its own folder (e.g. `api/`). Setting `handler: ..` tells `faas-cli` to use the **parent directory** (the project root) as the Docker build context. This means the Dockerfile sees the full source tree — shared library, all sub-projects, tests, and solution.
+All functions are defined in a single `stack.yml` at the project root. Setting `handler: .` tells `faas-cli` to use the project root as the Docker build context, so the Dockerfile sees the full source tree — shared library, all sub-projects, and solution.
 
 ### `PUBLISH_PROJECT` build arg
 
-The Dockerfile uses a single `PUBLISH_PROJECT` build arg to select which sub-project to publish. Each `.yml` overrides it:
+The Dockerfile uses a single `PUBLISH_PROJECT` build arg to select which sub-project to publish. Each function in `stack.yml` sets it:
 
 ```yaml
 functions:
     my-project-api:
         lang: aspnet-multi
-        handler: ..
+        handler: .
         build_args:
             PUBLISH_PROJECT: "api/src/function.csproj"
 ```
@@ -67,8 +67,7 @@ faas-cli new --lang aspnet-multi my-project
 
 ### 2. Rename and Customize
 
-- Rename the sample `.yml` files (e.g. `my-project-api.yml` → `payment-gateway-wrapper.yml`)
-- Update the function name, image, env vars, and secrets in each `.yml`
+- Update function names, images, env vars, and secrets in `stack.yml`
 - Add your code to `api/src/`, `worker/src/`, and `shared/src/`
 
 ### 3. Add More Sub-Projects
@@ -76,22 +75,26 @@ faas-cli new --lang aspnet-multi my-project
 To add another deployable (e.g. a consumer):
 
 1. Create `consumer/src/function.csproj` with a `ProjectReference` to `../../shared/src/shared.csproj`
-2. Add a `consumer/my-project-consumer.yml` with `handler: ..` and `build_args: { PUBLISH_PROJECT: "consumer/src/function.csproj" }`
+2. Add a new function entry in `stack.yml` with `handler: .` and `build_args: { PUBLISH_PROJECT: "consumer/src/function.csproj" }`
 3. Add the project to `function.sln`
-4. Deploy using `faas-cli build -f consumer/my-project-consumer.yml`, push, and deploy. The template automatically parses your `.csproj` name to boot the correct DLL.
+4. Build and deploy — the template automatically parses your `.csproj` name to boot the correct DLL.
 
 ### 4. Build
 
 ```bash
 cd my-project
 
-# Build individual sub-projects
-faas-cli build -f api/my-project-api.yml
-faas-cli build -f worker/my-project-worker.yml
+# Build all functions
+faas-cli build -f stack.yml
 
-# Push
-faas-cli push -f api/my-project-api.yml
-faas-cli push -f worker/my-project-worker.yml
+# Build a single function
+faas-cli build -f stack.yml --filter my-project-api
+
+# Push all
+faas-cli push -f stack.yml
+
+# Deploy all
+faas-cli deploy -f stack.yml
 ```
 
 ## Worker Service
@@ -130,7 +133,7 @@ labels:
 
 ## BuildKit
 
-This template requires Docker BuildKit (for `COPY --parents` and secret mounts). Enable it:
+This template requires Docker BuildKit (for `COPY --parents` and secret mounts). Docker 23.0+ has BuildKit enabled by default. On older versions, enable it manually:
 
 ```bash
 export DOCKER_BUILDKIT=1
@@ -141,6 +144,6 @@ export DOCKER_BUILDKIT=1
 Same as the standard `aspnet` template — use BuildKit secrets:
 
 ```bash
-faas-cli build -f api/my-project-api.yml --shrinkwrap
+faas-cli build -f stack.yml --filter my-project-api --shrinkwrap
 docker build --secret id=nuget.config,src=~/.nuget/NuGet/NuGet.Config build/my-project-api
 ```
