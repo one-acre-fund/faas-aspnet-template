@@ -4,20 +4,18 @@ provider:
     gateway: http://127.0.0.1:8080
 functions:
     my-project-api:
-        lang: aspnet-multi
+        lang: aspnet
         handler: .
         image: my-registry/my-project-api:latest
         build_args:
             PUBLISH_PROJECT: "src/api/function.csproj"
-        run-tests: "false"
         disabled: "false"
-
         environment:
             ASPNETCORE_ENVIRONMENT: "Development"
             service-name: "my-project-api"
 
         labels:
-            com.openfaas.scale.min: "1"
+            com.openfaas.scale.min: "0"
 
         limits:
             cpu: "500m"
@@ -27,14 +25,12 @@ functions:
             memory: "400Mi"
 
     my-project-worker:
-        lang: aspnet-multi
+        lang: aspnet
         handler: .
         image: my-registry/my-project-worker:latest
         build_args:
             PUBLISH_PROJECT: "src/worker/worker.csproj"
-        run-tests: "false"
         disabled: "false"
-
         environment:
             ASPNETCORE_ENVIRONMENT: "Development"
             service-name: "my-project-worker"
@@ -43,7 +39,7 @@ functions:
             sample-worker-interval-sec: "30"
 
         labels:
-            com.openfaas.scale.min: "1"
+            com.openfaas.scale.min: "0"
             com.openfaas.scale.max: "1"
 
         limits:
@@ -52,3 +48,8 @@ functions:
         requests:
             cpu: "100m"
             memory: "400Mi"
+
+configuration:
+    templates:
+        - name: aspnet
+          source: https://github.com/one-acre-fund/faas-aspnet-template#net9-multi

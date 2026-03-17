@@ -24,16 +24,16 @@ Unlike traditional OpenFaaS templates where 1 directory = 1 function, this templ
 
 ```
 my-project/
-├── shared/
-│   └── src/Shared.csproj
-├── api/
-│   └── src/api.csproj             ← References Shared.csproj
-├── worker/
-│   └── src/worker.csproj          ← References Shared.csproj
-│
-├── stack.yml                      ← All functions defined here (handler: .)
-├── .dockerignore                  ← Excludes bin/ and obj/
-└── my-project.sln                 ← Restores all projects at once
+├── src/
+│   ├── shared/shared.csproj           ← Shared library
+│   ├── api/function.csproj            ← References shared.csproj
+│   └── worker/worker.csproj           ← References shared.csproj
+├── tests/
+│   ├── unit/unit.csproj
+│   └── integration/integration.csproj
+├── stack.yml                          ← All functions defined here (handler: .)
+├── .dockerignore                      ← Excludes bin/ and obj/
+└── function.sln                       ← Restores all projects at once
 ```
 
 ## How to use it
