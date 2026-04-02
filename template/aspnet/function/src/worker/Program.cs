@@ -1,25 +1,32 @@
 using System.Diagnostics.CodeAnalysis;
-using OpenFaaS.Worker.Scheduling;
+using Hangfire;
+using Hangfire.InMemory;
 using OpenFaaS.Worker.Workers;
 
 var builder = WebApplication.CreateBuilder(args);
 
 var config = builder.Configuration;
 
-// ── Register scheduler ──
-var schedulerType = config.GetValue<string>("scheduler-type") ?? "default";
-switch (schedulerType)
-{
-    // case "quartz":   builder.Services.AddQuartzScheduler(config); break;
-    // case "hangfire": builder.Services.AddHangfireScheduler(config); break;
-    default: builder.Services.AddSingleton<IJobScheduler, DefaultJobScheduler>(); break;
-}
+// ── Hangfire ──
+builder.Services.AddHangfire(cfg => cfg
+    .SetDataCompatibilityLevel(CompatibilityLevel.Version_180)
+    .UseSimpleAssemblyNameTypeSerializer()
+    .UseRecommendedSerializerSettings()
+    .UseInMemoryStorage());
 
-// ── Register workers (toggle via config) ──
-if (config.GetValue("sample-worker-enabled", true))
-    builder.Services.AddHostedService<SampleWorker>();
+builder.Services.AddHangfireServer();
 
 var app = builder.Build();
+
+// ── Schedule recurring jobs ──
+app.Lifetime.ApplicationStarted.Register(() =>
+{
+    var intervalSec = config.GetValue("sample-worker-interval-sec", 30);
+    RecurringJob.AddOrUpdate<SampleWorker>(
+        "sample-worker",
+        job => job.ExecuteAsync(CancellationToken.None),
+        $"*/{Math.Max(1, intervalSec / 60)} * * * *");
+});
 
 // Minimal health-check endpoint required by of-watchdog
 app.MapGet("/", () => Results.Ok(new { Status = "healthy", Service = "worker" }));

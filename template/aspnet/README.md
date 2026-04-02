@@ -70,8 +70,7 @@ my-project/
 │   └── worker/
 │       ├── worker.csproj              # Background worker (references shared)
 │       ├── Program.cs
-│       ├── Workers/SampleWorker.cs
-│       └── Scheduling/IJobScheduler.cs
+│       └── Workers/SampleWorker.cs
 ├── tests/
 │   ├── unit/unit.csproj
 │   └── integration/integration.csproj
@@ -129,27 +128,18 @@ faas-cli deploy -f my-project.yml
 
 ## Worker Service
 
-The worker is a standard ASP.NET app with `BackgroundService` classes. It exposes a minimal HTTP endpoint for OpenFaaS health checks, but its real work runs in hosted services.
+The worker is a standard ASP.NET app using [Hangfire](https://www.hangfire.io/) for background job scheduling. It exposes a minimal HTTP endpoint for OpenFaaS health checks, and runs recurring jobs via Hangfire.
 
-### Toggling Workers
+The template ships with `Hangfire.InMemory` for zero-config local development. For production, swap in a persistent storage backend (e.g. `Hangfire.SqlServer`, `Hangfire.Redis`).
 
-Each worker can be enabled/disabled via environment variables:
+### Configuration
+
+Job intervals are controlled via environment variables:
 
 ```yaml
 environment:
-    sample-worker-enabled: "true"
     sample-worker-interval-sec: "30"
 ```
-
-### Scheduler Abstraction
-
-The template includes an `IJobScheduler` interface for swapping scheduling backends:
-
-| `scheduler-type` | Implementation | Package |
-|---|---|---|
-| `default` | `Task.Delay` loops (BackgroundService) | Built-in |
-| `quartz` | Quartz.NET | Add `Quartz` NuGet |
-| `hangfire` | Hangfire | Add `Hangfire` NuGet |
 
 ### Scaling
 

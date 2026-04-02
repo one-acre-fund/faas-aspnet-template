@@ -34,8 +34,6 @@ functions:
         environment:
             ASPNETCORE_ENVIRONMENT: "Development"
             service-name: "my-project-worker"
-            scheduler-type: "default"
-            sample-worker-enabled: "true"
             sample-worker-interval-sec: "30"
 
         labels:
