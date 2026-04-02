@@ -1,0 +1,53 @@
+version: 1.0
+provider:
+    name: openfaas
+    gateway: http://127.0.0.1:8080
+functions:
+    my-project-api:
+        lang: aspnet
+        handler: .
+        image: my-registry/my-project-api:latest
+        build_args:
+            PUBLISH_PROJECT: "src/api/function.csproj"
+        disabled: "false"
+        environment:
+            ASPNETCORE_ENVIRONMENT: "Development"
+            service-name: "my-project-api"
+
+        labels:
+            com.openfaas.scale.min: "0"
+
+        limits:
+            cpu: "500m"
+            memory: "800Mi"
+        requests:
+            cpu: "100m"
+            memory: "400Mi"
+
+    my-project-worker:
+        lang: aspnet
+        handler: .
+        image: my-registry/my-project-worker:latest
+        build_args:
+            PUBLISH_PROJECT: "src/worker/worker.csproj"
+        disabled: "false"
+        environment:
+            ASPNETCORE_ENVIRONMENT: "Development"
+            service-name: "my-project-worker"
+            sample-worker-interval-sec: "30"
+
+        labels:
+            com.openfaas.scale.min: "0"
+            com.openfaas.scale.max: "1"
+
+        limits:
+            cpu: "400m"
+            memory: "800Mi"
+        requests:
+            cpu: "100m"
+            memory: "400Mi"
+
+configuration:
+    templates:
+        - name: aspnet
+          source: https://github.com/one-acre-fund/faas-aspnet-template#net10-multi
