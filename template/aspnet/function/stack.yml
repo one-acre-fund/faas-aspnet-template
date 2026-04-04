@@ -15,7 +15,8 @@ functions:
             service-name: "my-project-api"
 
         labels:
-            com.openfaas.scale.min: "0"
+            com.openfaas.scale.min: "1"
+            com.openfaas.scale.max: "3"
 
         limits:
             cpu: "500m"
@@ -37,7 +38,7 @@ functions:
             sample-worker-interval-sec: "30"
 
         labels:
-            com.openfaas.scale.min: "0"
+            com.openfaas.scale.min: "1"
             com.openfaas.scale.max: "1"
 
         limits:
