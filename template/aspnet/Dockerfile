@@ -56,14 +56,14 @@ COPY --from=builder /source/faas/published .
 # Extract the DLL name from PUBLISH_PROJECT (e.g., "src/api/function.csproj" -> "function.dll")
 ARG PUBLISH_PROJECT
 RUN DLL_NAME=$(basename $PUBLISH_PROJECT .csproj).dll && \
-    echo "#!/bin/sh\ndotnet ./$DLL_NAME" > start.sh && \
-    chmod +x start.sh
+    echo "#!/bin/sh\ndotnet ./$DLL_NAME" > function && \
+    chmod +x function
 
 RUN chown app:app -R /home/app
 
 USER app
 
-ENV fprocess="./start.sh"
+ENV fprocess="./function"
 ENV cgi_headers="true"
 ENV mode="http"
 ENV upstream_url="http://localhost:9000"
