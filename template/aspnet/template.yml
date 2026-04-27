@@ -1,5 +1,5 @@
 language: aspnet
-fprocess: ./start.sh
+fprocess: ./function
 welcome_message: |
   You have created a multi-project C# function using ASPNET Functions.
   This template supports multiple deployable projects (api, worker) with a shared library.
