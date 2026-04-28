@@ -53,11 +53,11 @@ COPY --from=watchdog /fwatchdog /usr/bin/
 WORKDIR /home/app/
 COPY --from=builder /source/faas/published .
 
-# Extract the DLL name from PUBLISH_PROJECT (e.g., "src/api/function.csproj" -> "function.dll")
+# Symlink the apphost so fprocess stays constant. Direct exec (no shell) keeps
+# env vars with hyphens/dots intact.
 ARG PUBLISH_PROJECT
-RUN DLL_NAME=$(basename $PUBLISH_PROJECT .csproj).dll && \
-    echo "#!/bin/sh\ndotnet ./$DLL_NAME" > function && \
-    chmod +x function
+RUN APPHOST=$(basename "$PUBLISH_PROJECT" .csproj) && \
+    ln -sf "$APPHOST" function
 
 RUN chown app:app -R /home/app
 
