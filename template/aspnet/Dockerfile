@@ -21,7 +21,7 @@ ENV DOTNET_CLI_TELEMETRY_OPTOUT 1
 # .dockerignore excludes bin/, obj/, build/ so globs stay clean.
 WORKDIR /source/faas/function
 COPY function/*.sln .
-COPY --parents function/./**/*.csproj ./
+COPY --parents function/./src/*/*.csproj ./
 
 # list files for debugging
 RUN ls -R
